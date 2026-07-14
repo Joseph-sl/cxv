@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Registro Anestésico Veterinario</title>
+<meta name="description" content="Monitoreo y registro de anestesia veterinaria durante cirugías">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- ============ VISTA: LISTA DE CASOS ============ -->
+<div id="view-lista" class="view">
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="pulse-dot" aria-hidden="true"></span>
+      <div>
+        <h1 class="titulo-app-h1">
+          <span>Registro</span>
+          <span id="titulo-app-variable">Valentina Salazar</span>
+          <input type="text" id="titulo-app-input" class="input titulo-app-input" hidden>
+          <button id="btn-editar-titulo" class="btn-icon btn-icon-sm" aria-label="Editar título" title="Editar título">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          </button>
+        </h1>
+        <p class="topbar-sub">Monitoreo perioperatorio veterinario</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="lista-toolbar">
+      <input type="search" id="buscar-caso" placeholder="Buscar por paciente, especie o procedimiento…" class="input" autocomplete="off">
+      <button id="btn-nuevo-caso" class="btn btn-accent">
+        <svg viewBox="0 0 24 24" class="icon"><path d="M12 5v14M5 12h14"/></svg>
+        Nuevo caso
+      </button>
+    </div>
+
+    <div id="lista-casos" class="lista-casos"></div>
+
+    <div id="lista-vacia" class="empty-state" hidden>
+      <svg viewBox="0 0 24 24" class="empty-icon"><path d="M12 2a5 5 0 0 1 5 5c0 2-1 3-1 5v2a4 4 0 0 1-8 0v-2c0-2-1-3-1-5a5 5 0 0 1 5-5z"/><path d="M8 21h8"/></svg>
+      <h2>Todavía no hay casos registrados</h2>
+      <p>Crea un nuevo caso para empezar a registrar los signos vitales de tu paciente durante la cirugía.</p>
+      <button class="btn btn-accent" id="btn-nuevo-caso-vacio">Crear el primer caso</button>
+    </div>
+  </main>
+</div>
+
+<!-- ============ VISTA: CASO ACTIVO ============ -->
+<div id="view-caso" class="view" hidden>
+  <header class="topbar topbar-caso">
+    <button id="btn-volver" class="btn-icon" aria-label="Volver a la lista de casos">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="topbar-brand topbar-brand-caso">
+      <h1 id="caso-titulo">Paciente</h1>
+      <p class="topbar-sub" id="caso-subtitulo">—</p>
+    </div>
+    <span id="guardado-indicador" class="guardado-indicador">Guardado</span>
+  </header>
+
+  <nav class="subtabs" role="tablist" aria-label="Secciones del caso">
+    <button class="subtab active" data-tab="datos" role="tab" aria-selected="true">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Paciente</span>
+    </button>
+    <button class="subtab" data-tab="farmacos" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M10.5 20.5L3.5 13.5a4.95 4.95 0 1 1 7-7l7 7a4.95 4.95 0 1 1-7 7z"/><path d="M8.5 8.5l7 7"/></svg>
+      <span>Protocolo</span>
+    </button>
+    <button class="subtab" data-tab="registro" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+      <span>Registro</span>
+    </button>
+    <button class="subtab" data-tab="informe" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M4 19V5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>
+      <span>Informe</span>
+    </button>
+  </nav>
+
+  <main class="container">
+
+    <!-- -------- TAB DATOS PACIENTE -------- -->
+    <section id="tab-datos" class="tab-panel active">
+      <div class="card">
+        <h2 class="card-title">Datos del paciente</h2>
+        <div class="form-grid" id="form-paciente">
+          <label class="field">
+            <span>Nombre del paciente</span>
+            <input type="text" id="p-nombre" class="input" placeholder="Ej: Luna">
+          </label>
+          <label class="field">
+            <span>Especie</span>
+            <select id="p-especie" class="input">
+              <option value="Canino">Canino</option>
+              <option value="Felino">Felino</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </label>
+          <label class="field" id="p-especie-otro-wrap" hidden>
+            <span>¿Cuál especie?</span>
+            <input type="text" id="p-especie-otro" class="input" placeholder="Ej: Conejo">
+          </label>
+          <label class="field">
+            <span>Raza</span>
+            <input type="text" id="p-raza" class="input" placeholder="Ej: Mestizo">
+          </label>
+          <label class="field field-split">
+            <span>Edad</span>
+            <span class="split-row">
+              <input type="number" min="0" step="0.1" id="p-edad-valor" class="input" placeholder="0">
+              <select id="p-edad-unidad" class="input input-narrow">
+                <option value="años">años</option>
+                <option value="meses">meses</option>
+              </select>
+            </span>
+          </label>
+          <label class="field">
+            <span>Sexo</span>
+            <select id="p-sexo" class="input">
+              <option value="Macho">Macho</option>
+              <option value="Hembra">Hembra</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Estado reproductivo</span>
+            <select id="p-estado-repro" class="input">
+              <option value="Entero">Entero</option>
+              <option value="Esterilizado">Esterilizado</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Peso (kg)</span>
+            <input type="number" min="0" step="0.01" id="p-peso" class="input" placeholder="0.0">
+          </label>
+          <label class="field">
+            <span>Condición corporal (1–9)</span>
+            <select id="p-cc" class="input">
+              <option value="">—</option>
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Clasificación ASA</span>
+            <select id="p-asa" class="input">
+              <option value="">—</option>
+              <option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option>
+            </select>
+          </label>
+          <label class="field checkbox-field">
+            <input type="checkbox" id="p-asa-e">
+            <span>Carácter de urgencia (E)</span>
+          </label>
+          <label class="field field-wide">
+            <span>Procedimiento</span>
+            <input type="text" id="p-procedimiento" class="input" placeholder="Ej: Ovariohisterectomía">
+          </label>
+          <label class="field field-wide">
+            <span>Campo clínico</span>
+            <input type="text" id="p-campo-clinico" class="input" placeholder="Ej: Cirugía de tejidos blandos">
+          </label>
+          <label class="field">
+            <span>Fecha de inicio</span>
+            <input type="date" id="p-fecha-inicio" class="input">
+          </label>
+          <label class="field">
+            <span>Hora de inicio</span>
+            <input type="time" id="p-hora-inicio" class="input">
+          </label>
+          <label class="field">
+            <span>Fecha de fin</span>
+            <input type="date" id="p-fecha-fin" class="input">
+          </label>
+          <label class="field">
+            <span>Hora de fin</span>
+            <input type="time" id="p-hora-fin" class="input">
+          </label>
+        </div>
+      </div>
+
+      <div class="card" id="campos-personalizados-card">
+        <div class="card-title-row">
+          <h2 class="card-title">Campos adicionales</h2>
+          <button class="btn btn-sm btn-outline" id="btn-add-campo-personalizado">+ Agregar campo</button>
+        </div>
+        <div id="lista-campos-personalizados" class="drug-list"></div>
+      </div>
+    </section>
+
+    <!-- -------- TAB FÁRMACOS -------- -->
+    <section id="tab-farmacos" class="tab-panel">
+
+      <div class="card">
+        <div class="card-title-row">
+          <h2 class="card-title">Premedicación</h2>
+          <button class="btn btn-sm btn-outline" data-add-drug="premedicacion">+ Añadir fármaco</button>
+        </div>
+        <div id="lista-premedicacion" class="drug-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <h2 class="card-title">Inducción</h2>
+          <button class="btn btn-sm btn-outline" data-add-drug="induccion">+ Añadir fármaco</button>
+        </div>
+        <div id="lista-induccion" class="drug-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <h2 class="card-title">Mantención</h2>
+          <button class="btn btn-sm btn-outline" data-add-drug="mantencion">+ Añadir fármaco</button>
+        </div>
+        <div id="lista-mantencion" class="drug-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <h2 class="card-title">Recuperación</h2>
+          <button class="btn btn-sm btn-outline" data-add-drug="recuperacion">+ Añadir fármaco</button>
+        </div>
+        <div id="lista-recuperacion" class="drug-list"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Observaciones del protocolo</h2>
+        <label class="field field-wide">
+          <textarea id="protocolo-observaciones" class="input" rows="4" placeholder="Notas generales sobre el protocolo anestésico…"></textarea>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Bloqueo locorregional</h2>
+        <label class="field checkbox-field">
+          <input type="checkbox" id="bloqueo-realizado">
+          <span>Se realizó bloqueo locorregional</span>
+        </label>
+        <div id="bloqueo-campos" class="form-grid" hidden>
+          <label class="field">
+            <span>Técnica / sitio</span>
+            <input type="text" id="bloqueo-tecnica" class="input" placeholder="Ej: Epidural lumbosacra">
+          </label>
+          <label class="field">
+            <span>Fármaco</span>
+            <input type="text" id="bloqueo-farmaco" class="input" placeholder="Ej: Bupivacaína">
+          </label>
+          <label class="field">
+            <span>Dosis</span>
+            <input type="text" id="bloqueo-dosis" class="input" placeholder="Ej: 1 mg/kg">
+          </label>
+          <label class="field">
+            <span>Ruta</span>
+            <select id="bloqueo-ruta" class="input">
+              <option value="Epidural">Epidural</option>
+              <option value="Infiltración local">Infiltración local</option>
+              <option value="Bloqueo de nervio periférico">Bloqueo de nervio periférico</option>
+              <option value="Intraarticular">Intraarticular</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Hora</span>
+            <input type="time" id="bloqueo-hora" class="input">
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Tubo endotraqueal</h2>
+        <div class="form-grid">
+          <label class="field">
+            <span>Tamaño (mm DI)</span>
+            <input type="number" min="0" step="0.5" id="ett-tamano" class="input" placeholder="Ej: 7.5">
+          </label>
+          <label class="field">
+            <span>Tipo</span>
+            <select id="ett-tipo" class="input">
+              <option value="">—</option>
+              <option value="Con balón">Con balón</option>
+              <option value="Sin balón">Sin balón</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------- TAB REGISTRO -------- -->
+    <section id="tab-registro" class="tab-panel">
+      <div id="vitals-strip" class="vitals-strip" hidden>
+        <div class="vitals-strip-item">
+          <span class="vitals-label">FC</span>
+          <span class="vitals-value" id="vs-fc">—</span>
+          <span class="vitals-unit">lpm</span>
+        </div>
+        <div class="vitals-strip-item">
+          <span class="vitals-label">SpO₂</span>
+          <span class="vitals-value" id="vs-spo2">—</span>
+          <span class="vitals-unit">%</span>
+        </div>
+        <div class="vitals-strip-item">
+          <span class="vitals-label">PAM</span>
+          <span class="vitals-value" id="vs-pam">—</span>
+          <span class="vitals-unit">mmHg</span>
+        </div>
+        <div class="vitals-strip-item">
+          <span class="vitals-label">Últ. registro</span>
+          <span class="vitals-value vitals-value-time" id="vs-hora">—</span>
+        </div>
+      </div>
+
+      <div id="timeline" class="timeline"></div>
+
+      <div id="timeline-vacio" class="empty-state" hidden>
+        <svg viewBox="0 0 24 24" class="empty-icon"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        <h2>Sin marcas de tiempo</h2>
+        <p>Presiona el botón + para registrar el primer parámetro u observación.</p>
+      </div>
+    </section>
+
+    <!-- -------- TAB INFORME -------- -->
+    <section id="tab-informe" class="tab-panel">
+      <div class="card">
+        <div class="card-title-row">
+          <h2 class="card-title">Informe del caso</h2>
+          <button id="btn-descargar-pdf" class="btn btn-accent">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
+            Descargar PDF
+          </button>
+        </div>
+        <p class="muted-text">Vista previa de la tabla de parámetros y los gráficos que se incluirán en el informe.</p>
+      </div>
+
+      <div class="card" id="informe-tabla-card">
+        <h3 class="card-subtitle">Tabla de parámetros</h3>
+        <div class="table-scroll">
+          <table class="data-table" id="tabla-parametros">
+            <thead>
+              <tr>
+                <th>Hora</th><th>FC</th><th>FR</th><th>EtCO₂</th><th>SpO₂</th>
+                <th>PAS</th><th>PAD</th><th>PAM</th><th>T°</th><th>%inh</th><th>Comentario</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-parametros-body"></tbody>
+          </table>
+        </div>
+        <p class="empty-inline" id="tabla-parametros-vacia" hidden>Aún no hay registros de parámetros.</p>
+      </div>
+
+      <div class="card" id="informe-observaciones-card">
+        <h3 class="card-subtitle">Observaciones</h3>
+        <ul class="obs-list" id="lista-observaciones"></ul>
+        <p class="empty-inline" id="lista-observaciones-vacia" hidden>Aún no hay observaciones registradas.</p>
+      </div>
+
+      <div class="card" id="informe-graficos-card">
+        <h3 class="card-subtitle">Gráficos de parámetros en el tiempo</h3>
+        <div id="informe-graficos" class="charts-grid"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ MODAL: NUEVO / EDITAR CASO ============ -->
+<div id="modal-caso" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2>Nuevo caso</h2>
+    <label class="field">
+      <span>Nombre del paciente</span>
+      <input type="text" id="nuevo-caso-nombre" class="input" placeholder="Ej: Luna" autocomplete="off">
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btn-cancelar-nuevo-caso">Cancelar</button>
+      <button class="btn btn-accent" id="btn-crear-caso">Crear caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: FÁRMACO ============ -->
+<div id="modal-farmaco" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="modal-farmaco-titulo">Añadir fármaco</h2>
+    <label class="field">
+      <span>Fármaco</span>
+      <input type="text" id="mf-nombre" class="input" placeholder="Ej: Dexmedetomidina" autocomplete="off">
+    </label>
+    <div class="split-row">
+      <label class="field">
+        <span>Dosis</span>
+        <input type="text" id="mf-dosis" class="input" placeholder="Ej: 3 mcg/kg">
+      </label>
+      <label class="field">
+        <span>Ruta</span>
+        <select id="mf-ruta" class="input">
+          <option>IV</option><option>IM</option><option>SC</option>
+          <option>Oral</option><option>Inhalatoria</option><option>Intranasal</option><option>Otro</option>
+        </select>
+      </label>
+    </div>
+    <div class="split-row">
+      <label class="field">
+        <span>Hora</span>
+        <input type="time" id="mf-hora" class="input">
+      </label>
+      <label class="field" id="mf-efecto-wrap">
+        <span>Efecto observado</span>
+        <select id="mf-efecto" class="input">
+          <option value="">—</option>
+          <option>Nulo</option>
+          <option>Leve</option>
+          <option>Moderado</option>
+          <option>Profundo</option>
+          <option>Excesivo</option>
+        </select>
+      </label>
+    </div>
+    <label class="field field-wide">
+      <span>Comentario</span>
+      <input type="text" id="mf-comentario" class="input" placeholder="Ej: Paciente tolera bien la inducción">
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btn-eliminar-farmaco" hidden>Eliminar</button>
+      <div class="modal-actions-right">
+        <button class="btn btn-ghost" id="btn-cancelar-farmaco">Cancelar</button>
+        <button class="btn btn-accent" id="btn-guardar-farmaco">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: CAMPO PERSONALIZADO ============ -->
+<div id="modal-campo" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="modal-campo-titulo">Agregar campo</h2>
+    <label class="field field-wide">
+      <span>Nombre del parámetro</span>
+      <input type="text" id="cp-nombre" class="input" placeholder="Ej: N° de ficha" autocomplete="off">
+    </label>
+    <label class="field field-wide">
+      <span>Valor</span>
+      <input type="text" id="cp-valor" class="input" placeholder="Ej: 12345">
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btn-eliminar-campo" hidden>Eliminar</button>
+      <div class="modal-actions-right">
+        <button class="btn btn-ghost" id="btn-cancelar-campo">Cancelar</button>
+        <button class="btn btn-accent" id="btn-guardar-campo">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: MARCA DE TIEMPO (REGISTRO) ============ -->
+<div id="modal-registro" class="modal-overlay" hidden>
+  <div class="modal modal-lg">
+    <h2 id="modal-registro-titulo">Nueva marca de tiempo</h2>
+
+    <div class="category-toggle" role="tablist">
+      <button type="button" class="cat-btn active" data-cat="parametros">Parámetros</button>
+      <button type="button" class="cat-btn" data-cat="observacion">Observación</button>
+    </div>
+
+    <label class="field">
+      <span>Hora del registro</span>
+      <input type="time" id="mr-hora" class="input">
+    </label>
+
+    <div id="mr-campos-parametros" class="form-grid form-grid-vitals">
+      <label class="field">
+        <span>FC (lpm)</span>
+        <input type="number" inputmode="decimal" id="mr-fc" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>FR (rpm)</span>
+        <input type="number" inputmode="decimal" id="mr-fr" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>EtCO₂ (mmHg)</span>
+        <input type="number" inputmode="decimal" id="mr-etco2" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>SpO₂ (%)</span>
+        <input type="number" inputmode="decimal" id="mr-spo2" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>PAS (mmHg)</span>
+        <input type="number" inputmode="decimal" id="mr-pas" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>PAD (mmHg)</span>
+        <input type="number" inputmode="decimal" id="mr-pad" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>PAM (mmHg)</span>
+        <input type="number" inputmode="decimal" id="mr-pam" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>T° (°C)</span>
+        <input type="number" inputmode="decimal" id="mr-temp" class="input" placeholder="—">
+      </label>
+      <label class="field">
+        <span>%inh</span>
+        <input type="number" inputmode="decimal" id="mr-pinh" class="input" placeholder="—">
+      </label>
+    </div>
+
+    <label class="field">
+      <span id="mr-comentario-label">Comentario</span>
+      <textarea id="mr-comentario" class="input" rows="2" placeholder="Opcional"></textarea>
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btn-eliminar-registro" hidden>Eliminar</button>
+      <div class="modal-actions-right">
+        <button class="btn btn-ghost" id="btn-cancelar-registro">Cancelar</button>
+        <button class="btn btn-accent" id="btn-guardar-registro">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB para agregar marca de tiempo -->
+<button id="fab-registro" class="fab" hidden aria-label="Añadir marca de tiempo">
+  <svg viewBox="0 0 24 24" class="icon"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- ============ LIBRERÍAS EXTERNAS ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.8/jspdf.plugin.autotable.min.js"></script>
+
+<script src="js/utils.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/casos.js"></script>
+<script src="js/paciente.js"></script>
+<script src="js/farmacos.js"></script>
+<script src="js/registro.js"></script>
+<script src="js/informe.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
